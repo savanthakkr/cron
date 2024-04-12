@@ -2,30 +2,40 @@
 const cron = require("node-cron"); 
 const express = require("express"); 
 const nodemailer = require("nodemailer"); 
+const { sequelize } = require('../config/db');
+const { QueryTypes, Sequelize } = require('sequelize');
 
 app = express(); 
 
-let counter = 0;
+const counter = 0;
 
-// Calling sendEmail() function every 1 minute 
-
-
-// while(counter < limit){
-//   counter = counter + 1;
-     
-//   }
-async function f1() {
-  // do something
-  
-  counter++
-}
 
 
 cron.schedule("1 * * * * *", function() { 
-        
-  sendMail(); 
-}); 
+	sendMail(); 
+	// updateCategory();
+  });
+	
+	
 
+
+const updateCategory = async (req, res) => {
+	try {
+	//   const categoryId = req.params.id;
+	//   const { categoryname } = req.body;
+  
+	  await sequelize.query(
+		'UPDATE categories SET id = ? WHERE ids = ?',
+		{ replacements: [counter, 1], type: QueryTypes.UPDATE }
+		
+	  );
+	  res.json({ message: 'Category updated successfully' });
+	} catch (error) {
+	  console.error('Error updating category:', error);
+	  res.status(500).json({ error: 'Internal server error' });
+	}
+	
+  };
 
 
 // Send Mail function using Nodemailer 
@@ -59,3 +69,6 @@ function sendMail() {
 } 
 
 app.listen(3000); 
+
+module.exports = {updateCategory}
+// i want to store counter on mysql database and auto update value when change counter value

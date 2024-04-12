@@ -1,37 +1,35 @@
 const express = require('express');
-const app = express();
+const bodyParser = require('body-parser');
 const morgan = require('morgan');
-const cors = require('cors')
-const cookieParser = require('cookie-parser')
+const { sequelize, testConnection } = require('./config/db');
+const cors = require('cors');
+const userRoutes = require('./routes/productRoutes');
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-//env
-const dotenv = require('dotenv');
-const mysqlpool = require('./config/db');
-dotenv.config();
-
-const PORT = process.env.PORT || 4000;
-
-
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(morgan('dev'))
-app.use(express.json());
-app.use(cors({allowedHeaders:'*'}))
-app.use(cookieParser());
+app.use(cors());
 
+// Test the database connection
+testConnection()
+  .then(() => {
+    // Routes
+    
+    app.use('/api', userRoutes);
 
-
-//testing route
-app.get('/', (req, res) => {
-    res.status(200).send('hello world');
-})
-
-mysqlpool.query('SELECT 1 + 1 AS solution')
-    .then(() => {
-        console.log('database connected')
-
-        app.listen(PORT, () => {
-            console.log(`http://localhost:${PORT}`)
-        });
-    })
-    .catch((err) => {
-        console.log(err);
+    
+    app.use((err, req, res, next) => {
+      console.error(err.stack);
+      res.status(500).send('Something went wrong!');
     });
+
+    // Start the server
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  })
+  .catch(err => {
+    console.error('Unable to start server:', err);
+  });
